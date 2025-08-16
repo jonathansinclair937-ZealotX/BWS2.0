@@ -1,0 +1,1 @@
+// ContentWindow component placeholder

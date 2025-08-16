@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BWS — Business</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><h1>Business</h1></header>
+  <main style="padding:1rem;">
+    <div id="biz"></div>
+    <section id="reviews" data-psi="reviews">
+      <h2>Reviews</h2>
+      <div id="reviews-list"></div>
+    </section>
+  </main>
+  <script type="module">
+    import { fetchAndRenderReviews } from './reviews.js';
+    const params = new URLSearchParams(location.search);
+    const id = parseInt(params.get('id')||'0',10);
+    async function load() {
+      const res = await fetch('./api/business.php?id='+id);
+      if (!res.ok) return;
+      const b = await res.json();
+      const el = document.getElementById('biz');
+      el.innerHTML = `
+        <div class="card">
+          <div style="display:flex; gap:1rem; align-items:center;">
+            <img src="${b.logo}" style="width:64px;height:64px;border-radius:.5rem;" alt="${b.name} logo" />
+            <div>
+              <h2 style="margin:.2rem 0">${b.name}</h2>
+              <div class="muted">⭐ ${b.rating_avg} · ${b.rating_count} reviews</div>
+            </div>
+          </div>
+          <p style="margin-top:.5rem">${b.description||''}</p>
+          <div style="margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+            ${(b.links||[]).map(l => `<a class="btn" target="_blank" href="${l.url}">${l.label||'Website'}</a>`).join('')}
+          </div>
+        </div>`;
+      await fetchAndRenderReviews(id);
+      // Scroll to review anchor if provided
+      if (location.hash.startsWith('#review-')) {
+        const rid = location.hash.slice('#review-'.length);
+        const target = document.querySelector(`[data-review-id="${rid}"]`);
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

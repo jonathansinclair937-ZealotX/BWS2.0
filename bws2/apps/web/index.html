@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BWS2 — Netflix Directory</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Black Wall Street 2.0</h1>
+    <div id="notif-anchor"></div>
+  </header>
+  <script type="module">
+    import { initNotificationsBell } from './notifications-bell.js';
+    initNotificationsBell();
+  </script>
+
+  <div id="hero-root"></div>
+  <section data-psi="subcategory-filters" class="filters"></section>
+  <section id="rail-root"></section>
+  <div id="map-root"></div>
+  <div id="reviews-root"></div>
+
+  <script type="module">
+    import { loadAndRenderRail } from './rail.js';
+
+    // Mount hero
+    fetch('./hero.html').then(r=>r.text()).then(html => {
+      document.getElementById('hero-root').innerHTML = html;
+      import('./hero.js');
+    });
+
+    // Filters
+    const filters = document.querySelector('[data-psi="subcategory-filters"]');
+    filters.innerHTML = ['weighted','distance','reviews','ownership'].map(m => `<button class="filter-btn" data-mode="${m}">${m}</button>`).join('');
+
+    // Initial rail
+    fetch('./rail.html').then(r=>r.text()).then(html => {
+      document.getElementById('rail-root').innerHTML = html;
+      loadAndRenderRail('sample', { sort:'weighted' });
+    });
+
+    // Filter change
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn'); if (!btn) return;
+      loadAndRenderRail('sample', { sort: btn.dataset.mode });
+    });
+
+    // Reviews mount
+    fetch('./reviews.html').then(r=>r.text()).then(html => {
+      document.getElementById('reviews-root').innerHTML = html;
+      import('./reviews.js').then(mod => mod.fetchAndRenderReviews());
+    });
+
+    // On selection, fetch specific reviews
+    document.addEventListener('psi:tileSelected', (e) => {
+      const { id } = e.detail || {}; if (!id) return;
+      import('./reviews.js').then(mod => mod.fetchAndRenderReviews(id));
+    });
+  </script>
+</body>
+</html>

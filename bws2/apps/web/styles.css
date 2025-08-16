@@ -1,0 +1,29 @@
+body { font-family: sans-serif; background:#111; color:#eee; margin:0; }
+.topbar { display:flex; align-items:center; gap:1rem; background:#1c1c1c; padding:1rem; }
+.filters { padding: .5rem 1rem; display:flex; gap:.5rem; }
+.filter-btn { background:#222; color:#eee; border:none; border-radius:.75rem; padding:.5rem .75rem; cursor:pointer; }
+.filter-btn:hover { background:#2a2a2a; }
+.psi-rail { padding: 1rem; }
+.rail-tiles { display:flex; gap:1rem; overflow-x:auto; }
+.psi-tile { background:#222; border-radius:1rem; padding:.5rem; cursor:pointer; flex:0 0 160px; }
+.psi-tile.selected { outline: 2px solid #6cf; transform: translateY(-4px); transition: transform .15s ease; }
+.tile-logo { width:100%; border-radius:.5rem; }
+.tile-overlay { text-align:center; padding:.5rem 0; }
+.tile-name { display:block; font-weight:700; }
+.tile-meta { display:block; color:#aaa; font-size:.85rem; }
+#hero { display:flex; gap:1rem; padding:1rem; }
+.hero-image { flex: 0 0 50vw; height: 30vh; background-size: cover; background-position: center; border-radius: 1rem; background-color:#333; }
+.hero-info { display:flex; flex-direction:column; justify-content:center; }
+#reviews { padding:1rem; }
+.review { display:flex; align-items:center; gap:1rem; margin:.5rem 0; background:#1a1a1a; padding:.6rem; border-radius:.75rem; }
+.review-logo { width:40px; height:40px; border-radius:50%; }
+.bubble { flex:1; background:#222; padding:.5rem .75rem; border-radius:.75rem; }
+.rating { color:#ffca2c; font-weight:600; }
+/* Notifications bell */
+.notif-bell { margin-left:auto; position:relative; cursor:pointer; }
+.notif-bell .badge { position:absolute; top:-6px; right:-6px; background:#e74c3c; color:#fff; font-size:.7rem; padding:0 .35rem; border-radius:999px; }
+.notif-panel { position:absolute; right:1rem; top:3rem; width:320px; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:.75rem; box-shadow:0 10px 30px rgba(0,0,0,.4); display:none; z-index:20; }
+.notif-panel.open { display:block; }
+.notif-item { padding:.6rem .75rem; border-bottom:1px solid #242424; }
+.notif-item:last-child { border-bottom:none; }
+.notif-actions { display:flex; gap:.5rem; padding:.5rem; justify-content:flex-end; }

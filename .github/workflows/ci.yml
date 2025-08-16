@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bws2
+          MYSQL_USER: bws_user
+          MYSQL_PASSWORD: bws_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ubws_user -pbws_pass"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_mysql, json
+          tools: composer
+
+      - name: Validate composer.json
+        run: composer validate --no-check-lock
+
+      - name: Install PHP deps
+        run: composer install --no-interaction --no-progress
+
+      - name: Wait for MySQL
+        run: |
+          for i in `seq 1 30`; do
+            mysql -h 127.0.0.1 -ubws_user -pbws_pass -e "SELECT 1" && break
+            echo "MySQL not ready yet..."; sleep 2
+          done
+
+      - name: Prepare .env
+        run: |
+          cp bws2/.env.example bws2/.env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' bws2/.env
+          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' bws2/.env
+          sed -i 's/^DB_NAME=.*/DB_NAME=bws2/' bws2/.env
+          sed -i 's/^DB_USER=.*/DB_USER=bws_user/' bws2/.env
+          sed -i 's/^DB_PASS=.*/DB_PASS=bws_pass/' bws2/.env
+
+      - name: Run migrations
+        run: php bws2/scripts/migrate.php
+
+      - name: PHP Lint (syntax check)
+        run: |
+          set -e
+          php -v
+          find bws2 -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l
+
+      - name: Smoke test (render homepage)
+        run: |
+          php -S 127.0.0.1:8000 -t bws2/apps/web > /dev/null 2>&1 &
+          sleep 2
+          curl -sSf http://127.0.0.1:8000/index.html | head -n 5

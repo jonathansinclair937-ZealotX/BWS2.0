@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BWS2 Admin Console</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="admin.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">BWS</span>
+      <div class="brand-text">Admin Console</div>
+    </div>
+    <nav class="menu">
+      <button data-route="dashboard" class="active">Dashboard</button>
+      <button data-route="clients">Clients</button>
+      <button data-route="businesses">Businesses</button>
+      <button data-route="ads">Ads</button>
+      <button data-route="reports">Reports</button>
+      <div class="sep"></div>
+      <button data-route="settings">Settings</button>
+    </nav>
+  </aside>
+  <main class="content">
+    <header class="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="user-info" id="user-info">Not signed in</div>
+    </header>
+    <section id="view"></section>
+  </main>
+</body>
+</html>

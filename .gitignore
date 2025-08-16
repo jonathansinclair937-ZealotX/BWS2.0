@@ -1,0 +1,19 @@
+# Env & local
+.env
+.env.*
+*.local
+
+# Vendor/build
+/vendor/
+/node_modules/
+/dist/
+/build/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Ignore Windows reserved name
+NUL

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BWS2 — Membership</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <header class="topbar"><h1>Membership</h1></header>
+  <main style="padding:1rem">
+    <div class="plans">
+      <div class="plan-card">
+        <h2>Basic</h2>
+        <p>Community access, directory perks.</p>
+        <button class="checkout-btn" data-price="basic">Join Basic</button>
+      </div>
+      <div class="plan-card">
+        <h2>Pro</h2>
+        <p>Private Club benefits, boosts, extras.</p>
+        <button class="checkout-btn" data-price="pro">Join Pro</button>
+      </div>
+    </div>
+    <div id="sub-status" style="margin-top:1rem"></div>
+  </main>
+  <script type="module" src="subscriptions.js"></script>
+</body>
+</html>
