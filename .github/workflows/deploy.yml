@@ -37,11 +37,22 @@ jobs:
             -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
             bws2/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/
 
-      - name: Run DB migrations on server
-        env:
-          PASS: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
-            -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'cd ${{ secrets.SERVER_WEB_DIR }} && ${{ secrets.SERVER_PHP }} scripts/migrate.php'
+
+- name: Upload site via SCP (into /bws2)
+  env: { PASS: ${{ secrets.SSH_PASSWORD }} }
+  run: |
+    sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+      ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+      'mkdir -p ${{ secrets.SERVER_WEB_DIR }}/bws2'
+    sshpass -p "$PASS" scp -P ${{ secrets.SSH_PORT }} -r \
+      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+      bws2/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/bws2/
+
+- name: Run DB migrations on server
+  env: { PASS: ${{ secrets.SSH_PASSWORD }} }
+  run: |
+    sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+      ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+      'cd ${{ secrets.SERVER_WEB_DIR }}/bws2 && ${{ secrets.SERVER_PHP }} scripts/migrate.php'
