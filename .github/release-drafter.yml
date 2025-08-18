@@ -15,5 +15,5 @@ template: |
   $CHANGES
 
   ## Deployment Notes
-  - Run DB migrations: `php bws2/scripts/migrate.php`
-  - Set/verify environment variables per `bws2/.env.example`
+  - Run DB migrations: `php bws/scripts/migrate.php`
+  - Set/verify environment variables per `bws/.env.example`

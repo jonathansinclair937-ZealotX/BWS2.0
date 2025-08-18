@@ -15,7 +15,7 @@ jobs:
         image: mysql:8
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: bws2
+          MYSQL_DATABASE: bws
           MYSQL_USER: bws_user
           MYSQL_PASSWORD: bws_pass
         ports:
@@ -52,24 +52,24 @@ jobs:
 
       - name: Prepare .env
         run: |
-          cp bws2/.env.example bws2/.env
-          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' bws2/.env
-          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' bws2/.env
-          sed -i 's/^DB_NAME=.*/DB_NAME=bws2/' bws2/.env
-          sed -i 's/^DB_USER=.*/DB_USER=bws_user/' bws2/.env
-          sed -i 's/^DB_PASS=.*/DB_PASS=bws_pass/' bws2/.env
+          cp bws/.env.example bws/.env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' bws/.env
+          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' bws/.env
+          sed -i 's/^DB_NAME=.*/DB_NAME=bws/' bws/.env
+          sed -i 's/^DB_USER=.*/DB_USER=bws_user/' bws/.env
+          sed -i 's/^DB_PASS=.*/DB_PASS=bws_pass/' bws/.env
 
       - name: Run migrations
-        run: php bws2/scripts/migrate.php
+        run: php bws/scripts/migrate.php
 
       - name: PHP Lint (syntax check)
         run: |
           set -e
           php -v
-          find bws2 -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l
+          find bws -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l
 
       - name: Smoke test (render homepage)
         run: |
-          php -S 127.0.0.1:8000 -t bws2/apps/web > /dev/null 2>&1 &
+          php -S 127.0.0.1:8000 -t bws/apps/web > /dev/null 2>&1 &
           sleep 2
           curl -sSf http://127.0.0.1:8000/index.html | head -n 5
