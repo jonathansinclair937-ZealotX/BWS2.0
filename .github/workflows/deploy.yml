@@ -1,4 +1,4 @@
-name: Deploy to HostGator
+name: Deploy to HostGator (password)
 
 on:
   push:
@@ -11,22 +11,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy files via rsync
+      - name: Add host to known_hosts
         run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
-            --exclude ".git/" \
-            --exclude ".github/" \
-            --exclude "database/" \
-            --exclude "scripts/" \
-            --exclude ".env" \
-            ./bws2/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Quick SSH smoke test
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            echo "Connected as: $(whoami)"
+            echo "PWD: $(pwd)"
+            ls -la ${{ secrets.SERVER_WEB_DIR }} || echo "Web dir missing"
+
+      - name: Copy files via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "bws2/*"
+          target: "${{ secrets.SERVER_WEB_DIR }}/"
+          overwrite: true
+          rm: true
+          strip_components: 1
 
       - name: Run DB migrations on server
         uses: appleboy/ssh-action@v1.0.3
@@ -34,7 +47,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd ${{ secrets.SERVER_WEB_DIR }}
             ${{ secrets.SERVER_PHP }} bws2/scripts/migrate.php
