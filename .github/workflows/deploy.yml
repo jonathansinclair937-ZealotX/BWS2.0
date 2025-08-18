@@ -44,4 +44,4 @@ jobs:
           sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
             -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'cd ${{ secrets.SERVER_WEB_DIR }} && ${{ secrets.SERVER_PHP }} bws2/scripts/migrate.php'
+            'cd ${{ secrets.SERVER_WEB_DIR }} && ${{ secrets.SERVER_PHP }} scripts/migrate.php'
