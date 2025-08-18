@@ -1,4 +1,4 @@
-name: Deploy to HostGator (password)
+name: Deploy to HostGator (OpenSSH + password)
 
 on:
   push:
@@ -11,43 +11,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
       - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Quick SSH smoke test
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            echo "Connected as: $(whoami)"
-            echo "PWD: $(pwd)"
-            ls -la ${{ secrets.SERVER_WEB_DIR }} || echo "Web dir missing"
+        env:
+          PASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+            -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+            -o StrictHostKeyChecking=yes \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'echo "OK $(whoami)"; echo "PWD: $(pwd)"; ls -la $HOME; ls -la ${{ secrets.SERVER_WEB_DIR }} || echo "Web dir missing"'
 
-      - name: Copy files via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          source: "bws2/*"
-          target: "${{ secrets.SERVER_WEB_DIR }}/"
-          overwrite: true
-          rm: true
-          strip_components: 1
+      - name: Upload site via SCP (recursive)
+        env:
+          PASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -p "$PASS" scp -P ${{ secrets.SSH_PORT }} -r \
+            -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+            bws2/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/
 
       - name: Run DB migrations on server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            cd ${{ secrets.SERVER_WEB_DIR }}
-            ${{ secrets.SERVER_PHP }} bws2/scripts/migrate.php
+        env:
+          PASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+            -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'cd ${{ secrets.SERVER_WEB_DIR }} && ${{ secrets.SERVER_PHP }} bws2/scripts/migrate.php'
