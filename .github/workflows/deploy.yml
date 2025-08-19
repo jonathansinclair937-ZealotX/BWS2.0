@@ -1,8 +1,9 @@
-name: Deploy to HostGator (OpenSSH + password)
+name: Deploy to HostGator (bws, password)
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: {}   # <-- lets you run it manually from the Actions tab
 
 jobs:
   deploy:
@@ -10,6 +11,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Show repo layout (prove bws exists)
+        run: |
+          pwd
+          ls -la
+          echo "---- contents of ./bws ----"
+          ls -la ./bws || (echo "ERROR: ./bws not found" && exit 1)
 
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
@@ -19,40 +27,37 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Quick SSH smoke test
-        env:
-          PASS: ${{ secrets.SSH_PASSWORD }}
+      - name: Ensure remote /bws exists + show docroot
+        env: { PASS: ${{ secrets.SSH_PASSWORD }} }
         run: |
           sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
             -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-            -o StrictHostKeyChecking=yes \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'echo "OK $(whoami)"; echo "PWD: $(pwd)"; ls -la $HOME; ls -la ${{ secrets.SERVER_WEB_DIR }} || echo "Web dir missing"'
+            'echo "DOCROOT: ${{ secrets.SERVER_WEB_DIR }}"; \
+             mkdir -p ${{ secrets.SERVER_WEB_DIR }}/bws; \
+             ls -la ${{ secrets.SERVER_WEB_DIR }}'
 
-      - name: Upload site via SCP (recursive)
-        env:
-          PASS: ${{ secrets.SSH_PASSWORD }}
+      - name: Upload ./bws -> ${SERVER_WEB_DIR}/bws
+        env: { PASS: ${{ secrets.SSH_PASSWORD }} }
         run: |
           sshpass -p "$PASS" scp -P ${{ secrets.SSH_PORT }} -r \
             -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-            bws/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/
+            "bws/*" \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:"${{ secrets.SERVER_WEB_DIR }}/bws/"
 
+      - name: List remote /bws after upload (prove it landed)
+        env: { PASS: ${{ secrets.SSH_PASSWORD }} }
+        run: |
+          sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+            -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'ls -la ${{ secrets.SERVER_WEB_DIR }}/bws | head -n 200'
 
-- name: Upload site via SCP (into /bws)
-  env: { PASS: ${{ secrets.SSH_PASSWORD }} }
-  run: |
-    sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
-      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-      ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-      'mkdir -p ${{ secrets.SERVER_WEB_DIR }}/bws'
-    sshpass -p "$PASS" scp -P ${{ secrets.SSH_PORT }} -r \
-      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-      bws/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.SERVER_WEB_DIR }}/bws/
-
-- name: Run DB migrations on server
-  env: { PASS: ${{ secrets.SSH_PASSWORD }} }
-  run: |
-    sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
-      -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
-      ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-      'cd ${{ secrets.SERVER_WEB_DIR }}/bws && ${{ secrets.SERVER_PHP }} scripts/migrate.php'
+      # Uncomment after upload is verified:
+      # - name: Run DB migrations from /bws
+      #   env: { PASS: ${{ secrets.SSH_PASSWORD }} }
+      #   run: |
+      #     sshpass -p "$PASS" ssh -p ${{ secrets.SSH_PORT }} \
+      #       -o KexAlgorithms=+diffie-hellman-group-exchange-sha256 \
+      #       ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+      #       'cd ${{ secrets.SERVER_WEB_DIR }}/bws && ${{ secrets.SERVER_PHP }} scripts/migrate.php'
