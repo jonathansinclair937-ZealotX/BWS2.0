@@ -1,7 +1,8 @@
--- 005_users_email.sql
+-- 005_users_email.sql (MySQL-compatible)
 ALTER TABLE bws2_users
-  ADD COLUMN IF NOT EXISTS email VARCHAR(255) NULL,
-  ADD UNIQUE INDEX IF NOT EXISTS uniq_email (email);
+  ADD COLUMN email VARCHAR(255) NULL,
+  ADD UNIQUE KEY uniq_email (email);
+
 
 -- Seed demo emails for scaffold users (safe to ignore if rows already exist)
 INSERT INTO bws2_users (username, email, role) VALUES
