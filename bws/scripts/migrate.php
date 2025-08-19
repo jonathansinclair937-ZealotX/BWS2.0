@@ -1,18 +1,22 @@
 <?php
 require_once __DIR__ . '/../packages/shared/db.php';
 try {
-  $pdo = pdo_mysql();
-  $dir = __DIR__ . '/../database/migrations';
-  $files = array_filter(scandir($dir), fn($f) => preg_match('/\.sql$/',$f));
-  sort($files);
-  foreach ($files as $f) {
-    $sql = file_get_contents($dir . '/' . $f);
-    echo "Applying migration: $f\n";
+    $sql = file_get_contents($file);
     $pdo->exec($sql);
-  }
-  echo "Migrations complete.\n";
-} catch (Throwable $e) {
-  http_response_code(500);
-  echo "Migration failed: " . $e->getMessage() . "\n";
-  exit(1);
+    echo "Applied: $base\n";
+} catch (PDOException $e) {
+    $msg  = $e->getMessage();
+    $code = $e->errorInfo[1] ?? null; // MySQL error code
+
+    // Allow idempotent cases and continue
+    $ignorable = [1060, /* duplicate column */
+                  1061, /* duplicate key name */
+                  1062, /* duplicate entry on unique */
+                  1091  /* can't drop; check exists */];
+
+    if (in_array($code, $ignorable, true)) {
+        echo "Skipped (already applied): $base — $msg\n";
+    } else {
+        throw $e; // real failure -> stop
+    }
 }
