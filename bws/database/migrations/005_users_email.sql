@@ -1,5 +1,8 @@
--- 005_users_email.sql (MySQL-compatible)
-ALTER TABLE bws2_users
+-- 005_users_email.sql (portable MySQL/MariaDB)
+-- Adds an email column and a unique index to the existing `users` table.
+-- Safe to run on fresh DBs; if re-run it may raise "duplicate" errors which we'll ignore in the migrator.
+
+ALTER TABLE users
   ADD COLUMN email VARCHAR(255) NULL,
   ADD UNIQUE KEY uniq_email (email);
 
